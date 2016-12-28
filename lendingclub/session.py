@@ -150,7 +150,7 @@ class Session:
 
         # Get them from the user
         if email is None:
-            email = raw_input('Email:')
+            email = input('Email:')
             self.email = email
         if password is None:
             password = getpass.getpass()
@@ -193,7 +193,8 @@ class Session:
             self.__log('Data: {0}'.format(response.headers['x-echo-data']))
 
         # Parse any errors from the HTML
-        soup = BeautifulSoup(response.text, "html5lib")
+        #soup = BeautifulSoup(response.text, "html5lib")
+        soup = BeautifulSoup(response.text, 'lxml')
         errors = soup.find(id='master_error-list')
         if errors:
             errors = errors.text.strip()
