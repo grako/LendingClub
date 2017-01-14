@@ -36,6 +36,7 @@ from lendingclub.filters import Filter, FilterByLoanID, SavedFilter
 from lendingclub.session import Session
 
 
+
 class LendingClub:
     """
     The main entry point for interacting with Lending Club.
@@ -322,7 +323,7 @@ class LendingClub:
 
         return False
 
-    def search(self, filters=None, start_index=0, limit=100):
+    def search(self, filters=None, start_index=0, limit=700):
         """
         Search for a list of notes that can be invested in.
         (similar to searching for notes in the Browse section on the site)
@@ -364,6 +365,7 @@ class LendingClub:
 
         if self.session.json_success(json_response):
             results = json_response['searchresult']
+            
 
             # Normalize results by converting loanGUID -> loan_id
             for loan in results['loans']:
@@ -474,14 +476,17 @@ class LendingClub:
             >>> portfolio['order_id']               # See order ID
             1861880
         """
+
         assert filters is None or isinstance(filters, Filter), 'filter is not a lendingclub.filters.Filter'
         assert max_per_note >= 25, 'max_per_note must be greater than or equal to 25'
 
         # Set filters
         if filters:
             filter_str = filters.search_string()
+            
         else:
             filter_str = 'default'
+
 
         # Start a new order
         self.session.clear_session_order()
@@ -499,10 +504,12 @@ class LendingClub:
         # Options were found
         if self.session.json_success(json_response) and 'lmOptions' in json_response:
             options = json_response['lmOptions']
+            
 
             # Nothing found
             if type(options) is not list or json_response['numberTicks'] == 0:
                 self.__log('No lending portfolios were returned with your search')
+                print(1)
                 return False
 
             # Choose an investment option based on the user's min/max values
@@ -527,10 +534,11 @@ class LendingClub:
                     match_index = i
 
                 i += 1
-
+            
             # Nothing matched
             if match_option is None:
                 self.__log('No portfolios matched your percentage requirements')
+                print(2)
                 return False
 
             # Mark this portfolio for investing (in order to get a list of all notes)
@@ -545,13 +553,19 @@ class LendingClub:
             payload = {
                 'method': 'getPortfolio'
             }
+
             response = self.session.get('/data/portfolio', query=payload)
             json_response = response.json()
+            #print(1,json_response)
+            #print(type(json_response))
+            print(json_response['grossIncome'])
+
 
             # Extract fractions from response
             fractions = []
             if 'loanFractions' in json_response:
                 fractions = json_response['loanFractions']
+                #print(fractions)
 
                 # Normalize by converting loanFractionAmount to invest_amount
                 for frac in fractions:
@@ -563,8 +577,10 @@ class LendingClub:
 
             if len(fractions) == 0:
                 self.__log('The selected portfolio didn\'t have any loans')
+                print(3)
                 return False
             match_option['loan_fractions'] = fractions
+            
 
             # Validate that fractions do indeed match the filters
             if filters is not None:
@@ -586,11 +602,13 @@ class LendingClub:
                 order.add_batch(match_option['loan_fractions'])
                 order_id = order.execute()
                 match_option['order_id'] = order_id
-
+            print(4)
             return match_option
+
+       
         else:
             raise LendingClubError('Could not find any portfolio options that match your filters', response)
-
+        print(5)
         return False
 
     def my_notes(self, start_index=0, limit=100, get_all=False, sort_by='loanId', sort_dir='asc'):
@@ -924,7 +942,7 @@ class Order:
             assert 'loan_id' in loan and type(loan['loan_id']) is int, 'loan_id must be a number or dictionary containing a loan_id value'
             loan_id = loan['loan_id']
 
-        assert type(loan_id) in [str, unicode, int], 'Loan ID must be an integer number or a string'
+        assert type(loan_id) in [str, int], 'Loan ID must be an integer number or a string'
         self.loans[loan_id] = amount
 
     def update(self, loan_id, amount):
@@ -1097,11 +1115,12 @@ class Order:
         # LendingClub requires you to search for the loans before you can stage them
         f = FilterByLoanID(loan_ids)
         results = self.lc.search(f, limit=len(self.loans))
-        if len(results['loans']) == 0 or results['totalRecords'] != len(self.loans):
-            raise LendingClubError('Could not stage the loans. The number of loans in your batch does not match totalRecords. {0} != {1}'.format(len(self.loans), results['totalRecords']), results)
+        print(results)
+        #if len(results['loans']) == 0 or results['totalRecords'] != len(self.loans):
+        #    raise LendingClubError('Could not stage the loans. The number of loans in your batch does not match totalRecords. {0} != {1}'.format(len(self.loans), results['totalRecords']), results)
 
         # Stage each loan
-        for loan_id, amount in self.loans.iteritems():
+        for loan_id, amount in self.loans.items():
             payload = {
                 'method': 'addToPortfolio',
                 'loan_id': loan_id,
@@ -1147,7 +1166,7 @@ class Order:
             # Move to the place order page and get the struts token
 
             response = self.lc.session.get('/portfolio/placeOrder.action')
-            soup = BeautifulSoup(response.text, "html5lib")
+            soup = BeautifulSoup(response.text, 'lxml')
 
 
             # Example HTML with the stuts token:
@@ -1213,7 +1232,7 @@ class Order:
 
             # Process HTML for the order ID
             html = response.text
-            soup = BeautifulSoup(html, 'html5lib')
+            soup = BeautifulSoup(html, 'lxml')
 
             # Order num
             order_field = soup.find(id='order_id')

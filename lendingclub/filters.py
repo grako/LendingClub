@@ -263,6 +263,7 @@ class Filter(dict):
         return True
 
     def validate_one(self, loan):
+
         """
         Validate a single loan result record against the filters
 
@@ -292,6 +293,8 @@ class Filter(dict):
             'loanAmountRequested': 'progress',
             'alreadyInvestedIn': 'exclude_existing',
             'purpose': 'loan_purpose',
+            'grossIncome':'monthly_income',
+
         }
 
         # Throw an error if the loan does not contain one of the criteria keys that this filter has
@@ -300,9 +303,19 @@ class Filter(dict):
                 raise FilterValidationError('Loan does not have a "{0}" value.'.format(key), loan, criteria)
 
         # Loan ID
-        if 'loan_id' in self:
-            loan_ids = str(self['loan_id']).split(',')
-            if str(loan['loanGUID']) not in loan_ids:
+        #if 'loan_id' in self:
+        #    loan_ids = str(self['loan_id']).split(',')
+        #    if str(loan['loanGUID']) not in loan_ids:
+        #        raise FilterValidationError('Did not meet filter criteria for loan ID. {0} does not match {1}'.format(loan['loanGUID'], self['loan_id']), loan=loan, criteria='loan ID')
+
+        # Monthly Income (added by Grace O'Connell, 2017.01.01)
+        if 'monthly_income' in self:
+            month_str = loan['grossIncome']
+            #print(month_str)
+            #end_note = 
+            #monthly_inc = str(self['monthly_income']).split(',')
+
+            if str(loan['grossIncome']) not in loan_ids:
                 raise FilterValidationError('Did not meet filter criteria for loan ID. {0} does not match {1}'.format(loan['loanGUID'], self['loan_id']), loan=loan, criteria='loan ID')
 
         # Grade
@@ -574,7 +587,7 @@ class SavedFilter(Filter):
         Analyze the filter JSON and attempt to parse out the individual filters.
         """
         filter_values = {}
-
+        
         # ID to filter name mapping
         name_map = {
             10: 'grades',
