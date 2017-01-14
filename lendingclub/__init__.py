@@ -509,7 +509,6 @@ class LendingClub:
             # Nothing found
             if type(options) is not list or json_response['numberTicks'] == 0:
                 self.__log('No lending portfolios were returned with your search')
-                print(1)
                 return False
 
             # Choose an investment option based on the user's min/max values
@@ -538,7 +537,6 @@ class LendingClub:
             # Nothing matched
             if match_option is None:
                 self.__log('No portfolios matched your percentage requirements')
-                print(2)
                 return False
 
             # Mark this portfolio for investing (in order to get a list of all notes)
@@ -558,7 +556,7 @@ class LendingClub:
             json_response = response.json()
             #print(1,json_response)
             #print(type(json_response))
-            print(json_response['grossIncome'])
+            #print(json_response['grossIncome'])
 
 
             # Extract fractions from response
@@ -577,7 +575,6 @@ class LendingClub:
 
             if len(fractions) == 0:
                 self.__log('The selected portfolio didn\'t have any loans')
-                print(3)
                 return False
             match_option['loan_fractions'] = fractions
             
@@ -602,13 +599,11 @@ class LendingClub:
                 order.add_batch(match_option['loan_fractions'])
                 order_id = order.execute()
                 match_option['order_id'] = order_id
-            print(4)
             return match_option
 
        
         else:
             raise LendingClubError('Could not find any portfolio options that match your filters', response)
-        print(5)
         return False
 
     def my_notes(self, start_index=0, limit=100, get_all=False, sort_by='loanId', sort_dir='asc'):
@@ -1115,7 +1110,7 @@ class Order:
         # LendingClub requires you to search for the loans before you can stage them
         f = FilterByLoanID(loan_ids)
         results = self.lc.search(f, limit=len(self.loans))
-        print(results)
+        #print(results)
         #if len(results['loans']) == 0 or results['totalRecords'] != len(self.loans):
         #    raise LendingClubError('Could not stage the loans. The number of loans in your batch does not match totalRecords. {0} != {1}'.format(len(self.loans), results['totalRecords']), results)
 
