@@ -18,7 +18,7 @@ setup(
         "requests >= 1.2.3",
         "beautifulsoup4 >= 4.1.3",
         "html5lib >= 0.95",
-        "pybars >= 0.0.4"
+        "pybars3 >= 0.9.2"
     ],
     platforms='osx, posix, linux, windows',
     classifiers=[
